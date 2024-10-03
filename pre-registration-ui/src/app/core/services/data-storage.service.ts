@@ -7,6 +7,9 @@ import { Applicant } from "../../shared/models/dashboard-model/dashboard.modal";
 import { ConfigService } from "./config.service";
 import { RequestModel } from "src/app/shared/models/request-model/RequestModel";
 import { AuditModel } from "src/app/shared/models/demographic-model/audit.model";
+import { PRNResponse } from "src/app/shared/models/request-model/prnresponse";
+import { Observable } from "rxjs";
+import { PRNRequest } from "src/app/shared/models/request-model/prnrequest";
 
 /**
  * @description This class is responsible for sending or receiving data to the service.
@@ -713,11 +716,13 @@ export class DataStorageService {
       this.BASE_URL + this.PRE_REG_URL + `applications/prereg/status/${prid}`;
     return this.httpClient.get(requesturl);
   }
-  //malay-prn
-  getPRN() {
-    const requesturl =
-      this.BASE_URL + this.PRE_REG_URL + `getprn`;
-    console.log("generate prn url:: "+requesturl);
-    return this.httpClient.get(requesturl);
-  }
+  generatePRN(request:PRNRequest):Observable<PRNResponse>{
+    const localUrl=appConstants.generatePRNURL;
+    console.log(localUrl);
+    //const headers = new HttpHeaders({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json',});
+    /*let url =
+      this.BASE_URL +
+      appConstants.APPEND_URL.prn*/
+      return this.httpClient.post<PRNResponse>(localUrl,request);
+    }
 }

@@ -22,10 +22,21 @@
             </tr>
             <tr>
               <td>Surname : </td>
-              
+              <td>{{ ackData.Suname }}</td>
+            <tr>
+            <tr *ngIf="PRN">
+              <td>Payement Reference Number : </td>
+              <td><b>{{ PRN }}</b></td> 
+            </tr>
+            <tr>
+                <td>Fee : </td>
+                <td><b style="color: brown">{{ amount }}</b></td>
+             </tr>
+            <tr *ngIf="PRNerrorMessage">
+                <td>Your PRN generation was unsuccessiful:
+                <br>You can pay for  your selected service from any Bank before proceeding to NIRA </td>
+            </tr>
 
-                <td>{{ ackData.Suname }}</td>
-                <tr>
                 <td *ngIf="ackData.bookingTimePrimary && ackData.bookingTimePrimary.length > 0 && ackData.bookingTimePrimary[0].langAvailable">
                   <span *ngFor="let bookingTime of ackData.bookingTimePrimary; index as i;">
                     

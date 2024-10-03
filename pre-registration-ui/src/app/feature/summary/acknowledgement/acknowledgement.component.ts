@@ -14,6 +14,8 @@ import { ConfigService } from "src/app/core/services/config.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { NameList } from "src/app/shared/models/demographic-model/name-list.modal";
 import { UserModel } from "src/app/shared/models/demographic-model/user.modal";
+import { PRNRequest } from "src/app/shared/models/request-model/prnrequest";
+import { PRNResponse } from "src/app/shared/models/request-model/prnresponse";
 
 
 @Component({
@@ -32,6 +34,9 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
   errorlabels: any;
   apiErrorCodes: any;
   showSpinner: boolean = true;
+  PRN:string="";
+  PRNerrorMessage="";
+  amount:string="";
   //notificationRequest = new FormData();
   bookingDataPrimary = "";
   bookingDataSecondary = "";
@@ -182,6 +187,7 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
               "email": demographicData["email"]
             });
           });
+          this.generatePaymentRefNum(demographicData)
         });
         if (index === preRegIds.length - 1) {
           resolve(true);
@@ -700,6 +706,68 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
       data: body,
     });
   }
+
+
+  generatePaymentRefNum(demographicData:any) {
+    const surname = demographicData.surname[0].value;
+    const nin = demographicData.UIN;
+    const desiredService = demographicData.userCase;
+    const payablesServices = ["LOST","REPLACE", "UPDATE"];
+    const requestBody:PRNRequest = {
+      service:desiredService ,
+      NIN: nin,
+      fullName: surname
+    };
+    
+    if ( requestBody.fullName && requestBody.NIN &&requestBody.service &&payablesServices.includes(requestBody.service)) {
+      this.dataStorageService.generatePRN(requestBody).subscribe((response:PRNResponse) => {
+        if (response.response!=null) {
+          this. PRN= response.response.data.prn;
+          this.amount=response.response.data.amount;
+          } else if (response.errors && Array.isArray(response.errors)) {
+            const body = {
+              case: "PRN-ERRORS",
+              title:"PRN Error",
+              massage: response.errors[0].message,
+            };
+    
+            this.dialog.open(DialougComponent, {
+              width: "500px",
+              data: body
+             });
+    
+          console.error('Error:', response.errors[0].message);
+        }
+      }, (error) => {
+       this.PRNerrorMessage = error.message || JSON.stringify(error);  
+        const body = {
+          case: "PRN-CONNECT-ERRORS",
+          title: "PRN connection Error",
+          message: "Unable to connect to the server: " + this. PRNerrorMessage + " \n\n Make sure to pay in any Bank before proceeding to NIRA office"
+        };
+        console.log(body);
+    
+        this.dialog.open(DialougComponent, {
+          width: "500px",
+          data: body
+         });
+    
+       // console.error('Error during API call:', error);
+        
+      }
+    );
+    }else{
+      let body={
+      title:"No required payment",
+      case:"NO-PAYMENT",
+        message:"Your selected service doesn't require any payment"
+      }
+    this.dialog.open(DialougComponent, {
+      width: "350px",
+      data: body
+    });
+    }
+      }
 
   ngOnDestroy() {
     this.subscriptions.forEach((subscription) => subscription.unsubscribe());
