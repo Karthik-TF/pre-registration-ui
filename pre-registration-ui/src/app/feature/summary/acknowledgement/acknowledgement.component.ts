@@ -708,66 +708,117 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
   }
 
 
-  generatePaymentRefNum(demographicData:any) {
+  generatePaymentRefNum(demographicData: any) {
     const surname = demographicData.surname[0].value;
     const nin = demographicData.UIN;
     const desiredService = demographicData.userCase;
-    const payablesServices = ["LOST","REPLACE", "UPDATE"];
-    const requestBody:PRNRequest = {
-      service:desiredService ,
+    const payablesServices = ["LOST", "REPLACE", "UPDATE"];
+    const age:number =this.dataStorageService.calculateAge(demographicData.dateOfBirth);
+    console.log(age);
+    
+    const hasAnyCoreCardData = surname || 
+                            demographicData.givenName[0].value || 
+                            demographicData.otherNames[0].value || 
+                            demographicData.gender[0].value || 
+                            demographicData.dateOfBirth || 
+                            demographicData.applicantCitizenshipType[0].value;
+      console.log(hasAnyCoreCardData);
+    const requestBody: PRNRequest = {
+      service: desiredService,
       NIN: nin,
       fullName: surname
     };
-    
-    if ( requestBody.fullName && requestBody.NIN &&requestBody.service &&payablesServices.includes(requestBody.service)) {
-      this.dataStorageService.generatePRN(requestBody).subscribe((response:PRNResponse) => {
-        if (response.response!=null) {
-          this. PRN= response.response.data.prn;
-          this.amount=response.response.data.amount;
-          } else if (response.errors && Array.isArray(response.errors)) {
+
+    if (requestBody.fullName &&  requestBody.NIN &&  requestBody.service && payablesServices.includes(requestBody.service)) {
+        // Check if service is "UPDATE"
+      if (requestBody.service === "UPDATE") {
+        // Only call the API if core card data exists for UPDATE and age is above 16 years
+        if (hasAnyCoreCardData && age > 16) { //I think int 16 can come from config
+          this.dataStorageService.generatePRN(requestBody).subscribe((response: PRNResponse) => {
+            if (response.response != null) {
+              this.PRN = response.response.data.prn;
+              this.amount = response.response.data.amount;
+            } else if (response.errors && Array.isArray(response.errors)) {
+              const body = {
+                case: "PRN-ERRORS",
+                title: "PRN Error",
+                message: response.errors[0].message,
+              };
+              this.dialog.open(DialougComponent, {
+                width: "500px",
+                data: body
+              });
+              console.error('Error:', response.errors[0].message);
+            }
+          }, (error) => {
+            this.PRNerrorMessage = error.message || JSON.stringify(error);  
             const body = {
-              case: "PRN-ERRORS",
-              title:"PRN Error",
-              massage: response.errors[0].message,
+              case: "PRN-CONNECT-ERRORS",
+              title: "PRN Connection Error",
+              message: "Unable to connect to the server: " + this.PRNerrorMessage + "\n\nMake sure to pay in any Bank before proceeding to NIRA office"
             };
-    
+           // console.log(body);
             this.dialog.open(DialougComponent, {
               width: "500px",
               data: body
-             });
-    
-          console.error('Error:', response.errors[0].message);
+            });
+          });
+        } else {
+          // Show dialog if no core card data is present for UPDATE
+          const body = {
+            title: "COP NO Payment",
+            case: "NO-CORE-CARD-DATA",
+            message: "No payement since you have not changed any core card data.\n\n OR You are below 16 to be charged for the changes "
+          };
+          this.dialog.open(DialougComponent, {
+            width: "350px",
+            data: body
+          });
         }
-      }, (error) => {
-       this.PRNerrorMessage = error.message || JSON.stringify(error);  
-        const body = {
-          case: "PRN-CONNECT-ERRORS",
-          title: "PRN connection Error",
-          message: "Unable to connect to the server: " + this. PRNerrorMessage + " \n\n Make sure to pay in any Bank before proceeding to NIRA office"
-        };
-        console.log(body);
-    
-        this.dialog.open(DialougComponent, {
-          width: "500px",
-          data: body
-         });
-    
-       // console.error('Error during API call:', error);
-        
+      } else {
+        // Call the API for services that are not "UPDATE"
+        this.dataStorageService.generatePRN(requestBody).subscribe((response: PRNResponse) => {
+          if (response.response != null) {
+            this.PRN = response.response.data.prn;
+            this.amount = response.response.data.amount;
+          } else if (response.errors && Array.isArray(response.errors)) {
+            const body = {
+              case: "PRN-ERRORS",
+              title: "PRN Error",
+              message: response.errors[0].message,
+            };
+            this.dialog.open(DialougComponent, {
+              width: "500px",
+              data: body
+            });
+            console.error('Error:', response.errors[0].message);
+          }
+        }, (error) => {
+          this.PRNerrorMessage = error.message || JSON.stringify(error);  
+          const body = {
+            case: "PRN-CONNECT-ERRORS",
+            title: "PRN Connection Error",
+            message: "Unable to connect to the server: " + this.PRNerrorMessage + "\n\nMake sure to pay in any Bank before proceeding to NIRA office"
+          };
+          console.log(body);
+          this.dialog.open(DialougComponent, {
+            width: "500px",
+            data: body
+          });
+        });
       }
-    );
-    }else{
-      let body={
-      title:"No required payment",
-      case:"NO-PAYMENT",
-        message:"Your selected service doesn't require any payment"
-      }
-    this.dialog.open(DialougComponent, {
-      width: "350px",
-      data: body
-    });
+    } else {
+      const body = {
+        title: "No Required Payment",
+        case: "NO-PAYMENT",
+        message: "Your selected service doesn't require any payment."
+      };
+      this.dialog.open(DialougComponent, {
+        width: "350px",
+        data: body
+      });
     }
-      }
+  }
 
   ngOnDestroy() {
     this.subscriptions.forEach((subscription) => subscription.unsubscribe());

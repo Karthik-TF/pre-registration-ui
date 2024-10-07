@@ -10,6 +10,7 @@ import { AuditModel } from "src/app/shared/models/demographic-model/audit.model"
 import { PRNResponse } from "src/app/shared/models/request-model/prnresponse";
 import { Observable } from "rxjs";
 import { PRNRequest } from "src/app/shared/models/request-model/prnrequest";
+import moment from "moment";
 
 /**
  * @description This class is responsible for sending or receiving data to the service.
@@ -30,6 +31,8 @@ export class DataStorageService {
    * @param {ConfigService} configService
    * @memberof DataStorageService
    */
+  
+  serverDtFormat = "YYYY/MM/DD";
   constructor(
     private httpClient: HttpClient,
     private appConfigService: AppConfigService,
@@ -724,5 +727,21 @@ export class DataStorageService {
       this.BASE_URL +
       appConstants.APPEND_URL.prn*/
       return this.httpClient.post<PRNResponse>(localUrl,request);
+    }
+
+    calculateAge(dateStr: string) {
+      if (moment(dateStr, this.serverDtFormat, true).isValid()) {
+        const now = new Date();
+        const born = new Date(dateStr);
+        const years = Math.floor(
+          (now.getTime() - born.getTime()) / (365.25 * 24 * 60 * 60 * 1000)
+        );
+        if (years > 150 || years < 0) {
+        
+        } else {
+          return years;
+        }
+      }
+      
     }
 }

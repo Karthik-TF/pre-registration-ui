@@ -28,7 +28,7 @@
               <td>Payement Reference Number : </td>
               <td><b>{{ PRN }}</b></td> 
             </tr>
-            <tr>
+            <tr *ngIf="PRN">
                 <td>Fee : </td>
                 <td><b style="color: brown">{{ amount }}</b></td>
              </tr>
