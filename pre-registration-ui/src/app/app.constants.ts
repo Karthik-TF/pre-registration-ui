@@ -37,6 +37,7 @@ export const APPEND_URL = {
   gender: '/masterdata/gendertypes',
   resident: '/masterdata/individualtypes',
   transliteration: 'transliteration/transliterate',
+  generatePRN:'generatePrn',
   //applicantType: 'v1/applicanttype/',
   applicantType: '/masterdata/',
   validDocument: 'applicanttype/',
@@ -204,4 +205,3 @@ export const BOOKING_DETAIL = {
   time_slot_from: '09:30:00',
   time_slot_to: '09:45:00'
 };
-export const generatePRNURL = 'https://apiinternal-mosiphq.nira.go.ug/v1/payment/generatePrn';

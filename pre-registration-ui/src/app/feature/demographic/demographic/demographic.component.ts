@@ -1568,7 +1568,7 @@ export class DemographicComponent extends FormDeactivateGuardService
         if (!parentLocCode && index == 0) {
           parentLocCode = this.dataStorageService.getLocationMetadataHirearchy();
         }
-        if (parentLocCode) debugger;
+        if (parentLocCode) 
         await this.loadLocationData(
           parentLocCode,
           locationHeirarchy,
@@ -2901,15 +2901,15 @@ export class DemographicComponent extends FormDeactivateGuardService
       filtered.locationHierarchyLevel - 1 && this.getLocationHierarchy(fieldId).indexOf(uiField.id) > -1);
     return (!Array.isArray(parentField) || !parentField.length) ? null : parentField;
   };
-  generatePRN() {
-    this.dataStorageService.getPRN().subscribe(
-      (prn: string) => { 
-        this.generatedPRN = prn;
-        this.showPRNField = true;
-      },
-      (error) => {
-        console.error('Error fetching PRN:', error);
-      }
-    );
-  }
+  // generatePRN() {
+  //   this.dataStorageService.getPRN().subscribe(
+  //     (prn: string) => { 
+  //       this.generatedPRN = prn;
+  //       this.showPRNField = true;
+  //     },
+  //     (error) => {
+  //       console.error('Error fetching PRN:', error);
+  //     }
+  //   );
+  // }
 }

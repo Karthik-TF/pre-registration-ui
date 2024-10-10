@@ -41,6 +41,7 @@ export class DataStorageService {
 
   BASE_URL = this.appConfigService.getConfig()["BASE_URL"];
   PRE_REG_URL = this.appConfigService.getConfig()["PRE_REG_URL"];
+  PAYMENT_URL=this.appConfigService.getConfig()["PAYMENT_URL"];
 
   getI18NLanguageFiles(langCode: string) {
     return this.httpClient.get(`./assets/i18n/${langCode}.json`);
@@ -719,14 +720,16 @@ export class DataStorageService {
       this.BASE_URL + this.PRE_REG_URL + `applications/prereg/status/${prid}`;
     return this.httpClient.get(requesturl);
   }
+
+  /**
+    * @description This methods returns the PRN(payment Reference Number)
+    * @param request 
+    * @returns an `Observable` of the PRNResponse
+    * @memberof DataStorageService
+   */
   generatePRN(request:PRNRequest):Observable<PRNResponse>{
-    const localUrl=appConstants.generatePRNURL;
-    console.log(localUrl);
-    //const headers = new HttpHeaders({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json',});
-    /*let url =
-      this.BASE_URL +
-      appConstants.APPEND_URL.prn*/
-      return this.httpClient.post<PRNResponse>(localUrl,request);
+    const localUrl=this.PAYMENT_URL+ appConstants.APPEND_URL.generatePRN;
+     return this.httpClient.post<PRNResponse>(localUrl,request);
     }
 
     calculateAge(dateStr: string) {

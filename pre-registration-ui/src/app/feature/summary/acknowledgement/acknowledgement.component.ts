@@ -707,14 +707,20 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
     });
   }
 
-
+/**
+   * @description This method checks if the selected desiredService is a payable service 
+   * and checks if age is morethan 16 then calls the generate prn endpoint
+   *it updates the PRN property that is finally rendered on the acknowledgement slip
+   * @private
+   * @memberof AcknowledgementComponent
+   */
   generatePaymentRefNum(demographicData: any) {
     const surname = demographicData.surname[0].value;
-    const nin = demographicData.UIN;
-    const desiredService = demographicData.userCase;
-    const payablesServices = ["LOST", "REPLACE", "UPDATE"];
+    const nin = demographicData.NIN;
+    const desiredService = demographicData.userCase; //userCase may have changed to UserService
+    const payablesServices = ["LOST", "UPDATE"];
     const age:number =this.dataStorageService.calculateAge(demographicData.dateOfBirth);
-    console.log(age);
+    //console.log(age);
     
     const hasAnyCoreCardData = surname || 
                             demographicData.givenName[0].value || 
@@ -722,7 +728,6 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
                             demographicData.gender[0].value || 
                             demographicData.dateOfBirth || 
                             demographicData.applicantCitizenshipType[0].value;
-      console.log(hasAnyCoreCardData);
     const requestBody: PRNRequest = {
       service: desiredService,
       NIN: nin,
