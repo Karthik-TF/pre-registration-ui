@@ -1,5 +1,4 @@
 {
   "BASE_URL": "https://localhost:4200/proxyapi/",
-  "PRE_REG_URL": "preregistration/v1/",
-    "PAYMENT_URL":"https://apiinternal-mosiphq.nira.go.ug/v1/payment/"
+  "PRE_REG_URL": "preregistration/v1/"
 }

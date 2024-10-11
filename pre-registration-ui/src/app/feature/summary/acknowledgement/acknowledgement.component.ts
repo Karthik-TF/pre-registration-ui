@@ -14,8 +14,8 @@ import { ConfigService } from "src/app/core/services/config.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { NameList } from "src/app/shared/models/demographic-model/name-list.modal";
 import { UserModel } from "src/app/shared/models/demographic-model/user.modal";
-import { PRNRequest } from "src/app/shared/models/request-model/prnrequest";
-import { PRNResponse } from "src/app/shared/models/request-model/prnresponse";
+import { PRNRequestModel } from "src/app/shared/models/request-model/prnrequestModel";
+import { PRNResponseModel } from "src/app/shared/models/request-model/prnresponseModel";
 
 
 @Component({
@@ -717,7 +717,7 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
   generatePaymentRefNum(demographicData: any) {
     const surname = demographicData.surname[0].value;
     const nin = demographicData.NIN;
-    const desiredService = demographicData.userCase; //userCase may have changed to UserService
+    const desiredService = demographicData.userCase; //userCase may have changed to UserService in qa env
     const payablesServices = ["LOST", "UPDATE"];
     const age:number =this.dataStorageService.calculateAge(demographicData.dateOfBirth);
     //console.log(age);
@@ -728,7 +728,7 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
                             demographicData.gender[0].value || 
                             demographicData.dateOfBirth || 
                             demographicData.applicantCitizenshipType[0].value;
-    const requestBody: PRNRequest = {
+    const requestBody: PRNRequestModel = {
       service: desiredService,
       NIN: nin,
       fullName: surname
@@ -738,8 +738,8 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
         // Check if service is "UPDATE"
       if (requestBody.service === "UPDATE") {
         // Only call the API if core card data exists for UPDATE and age is above 16 years
-        if (hasAnyCoreCardData && age > 16) { //I think int 16 can come from config
-          this.dataStorageService.generatePRN(requestBody).subscribe((response: PRNResponse) => {
+        if (hasAnyCoreCardData && age > 16) { 
+          this.dataStorageService.generatePRN(requestBody).subscribe((response: PRNResponseModel) => {
             if (response.response != null) {
               this.PRN = response.response.data.prn;
               this.amount = response.response.data.amount;
@@ -782,7 +782,7 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
         }
       } else {
         // Call the API for services that are not "UPDATE"
-        this.dataStorageService.generatePRN(requestBody).subscribe((response: PRNResponse) => {
+        this.dataStorageService.generatePRN(requestBody).subscribe((response: PRNResponseModel) => {
           if (response.response != null) {
             this.PRN = response.response.data.prn;
             this.amount = response.response.data.amount;

@@ -1,4 +1,4 @@
-export interface PRNResponseSuccess {
+export interface PRNResponseSuccessModel {
     data:{
         prn: string;
         searchCode: string;

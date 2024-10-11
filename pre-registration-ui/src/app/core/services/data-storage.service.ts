@@ -7,9 +7,9 @@ import { Applicant } from "../../shared/models/dashboard-model/dashboard.modal";
 import { ConfigService } from "./config.service";
 import { RequestModel } from "src/app/shared/models/request-model/RequestModel";
 import { AuditModel } from "src/app/shared/models/demographic-model/audit.model";
-import { PRNResponse } from "src/app/shared/models/request-model/prnresponse";
+import { PRNResponseModel } from "src/app/shared/models/request-model/prnresponseModel";
 import { Observable } from "rxjs";
-import { PRNRequest } from "src/app/shared/models/request-model/prnrequest";
+import { PRNRequestModel } from "src/app/shared/models/request-model/prnrequestModel";
 import moment from "moment";
 
 /**
@@ -41,7 +41,7 @@ export class DataStorageService {
 
   BASE_URL = this.appConfigService.getConfig()["BASE_URL"];
   PRE_REG_URL = this.appConfigService.getConfig()["PRE_REG_URL"];
-  PAYMENT_URL=this.appConfigService.getConfig()["PAYMENT_URL"];
+ 
 
   getI18NLanguageFiles(langCode: string) {
     return this.httpClient.get(`./assets/i18n/${langCode}.json`);
@@ -727,9 +727,9 @@ export class DataStorageService {
     * @returns an `Observable` of the PRNResponse
     * @memberof DataStorageService
    */
-  generatePRN(request:PRNRequest):Observable<PRNResponse>{
-    const localUrl=this.PAYMENT_URL+ appConstants.APPEND_URL.generatePRN;
-     return this.httpClient.post<PRNResponse>(localUrl,request);
+  generatePRN(request:PRNRequestModel):Observable<PRNResponseModel>{
+    const localUrl=this.configService.getConfigByKey("nira.payment.gateway.generate-prn");
+     return this.httpClient.post<PRNResponseModel>(localUrl,request);
     }
 
     calculateAge(dateStr: string) {
