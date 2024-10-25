@@ -3059,16 +3059,4 @@ export class DemographicComponent extends FormDeactivateGuardService
     return (!Array.isArray(parentField) || !parentField.length) ? null : parentField;
   };
 
-  generatePRN() {
-    this.dataStorageService.getPRN().subscribe(
-      (prn: string) => {
-        this.generatedPRN = prn;
-        this.showPRNField = true;
-      },
-      (error) => {
-        console.error('Error fetching PRN:', error);
-      }
-    );
-  }
-
 }
