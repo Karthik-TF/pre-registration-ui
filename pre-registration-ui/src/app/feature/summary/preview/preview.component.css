@@ -81,10 +81,45 @@ header {
 }
 
 .preview__body-content-container {
+  padding:2%;
   display: flex;
   flex-wrap: wrap;
   padding: 20px 2rem 0px 2rem;
   color: #838383;
+}
+.preview__body-content-container {
+  display: flex;
+}
+.left-section, .right-section{
+  max-width: 400px;
+  vertical-align: top;
+  width: 50%; /* Right  and left section width */
+}
+.left-section {
+  width:50%;
+  border-right: 2px solid #f0f0f0; /* Vertical divider */
+}
+
+.left-section b, .right-section b {
+  padding-bottom: 1px;
+  display: inline-block; /* Ensures each label starts on a new line*/
+  text-align: left;
+  width: 38%; /* Adjust label width */ 
+} 
+
+/* .left-section td , .right-section td{
+  display: inline;
+  text-align: left;
+  width: 65%; /* Adjust value width */
+/* } */ 
+
+/* .left-section span, .right-section span {
+  display: inline; /* Keeps the label-value inline */
+/* } */ 
+
+.row {
+  vertical-align: top; /* Align cells at the top */
+  width:100%;
 }
 
 .preview__body-content-div {

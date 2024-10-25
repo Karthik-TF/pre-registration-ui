@@ -44,7 +44,9 @@ export class CanDeactivateGuardService
             .beforeClosed()
             .subscribe((res) => {
               if (res === true) resolve(true);
-              else resolve(false);
+              else {
+                resolve(true);
+              }
             });
         });
       });

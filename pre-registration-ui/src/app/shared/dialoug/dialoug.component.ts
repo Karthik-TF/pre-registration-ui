@@ -28,6 +28,7 @@ export class DialougComponent implements OnInit {
   checkCondition;
   applicantEmail;
   textDir = localStorage.getItem("dir");
+  userPreferredLangCode = localStorage.getItem("userPrefLanguage");
   inputList = [];
   invalidApplicantNumber = false;
   invalidApplicantEmail = false;
@@ -139,6 +140,9 @@ export class DialougComponent implements OnInit {
   }
 
   cancelConsent(message) {
+    this.router.navigateByUrl('/dummy', { skipLocationChange: true }).then(() => {
+      this.router.navigateByUrl(`${this.userPreferredLangCode}/pre-registration/demographic/new`);
+    });     //re-routing to demographic page itself in caes of trems not agreeded
     let consentText = [];
     message.forEach((element) => {
       consentText.push(element["fileText"]);
