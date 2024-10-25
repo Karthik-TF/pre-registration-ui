@@ -778,7 +778,9 @@ export class PreviewComponent implements OnInit {
     }
   }
 
-
+  get midpoint(): number {
+    return Math.ceil(this.controlIds.length / 2);  // Calculate the midpoint of total filled values
+  }
 
 
 }

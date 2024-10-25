@@ -32,40 +32,74 @@
     <mat-card-content [dir]="dataCaptureLangsDir[0]">
       <div class="preview__body-content-container">
         <div class="preview__body-content-div">
-          <table width="100%">
-            <tr *ngFor="let controlId of controlIds" class="row">
-              <td width="30%">
-                <span
-                  *ngFor="let dataCaptureLanguage of dataCaptureLanguages; let i = index; let first = first; let last = last;">
-                  <b>{{ControlIdLabelObjects[controlId][dataCaptureLanguages[i]]}}</b>
-                  <i *ngIf="!last"> / </i>
-                  <i *ngIf="last"> : </i>
-                </span>
-              </td>
-              <span
+          <table class="row" >
+            <tr>
+              <td class="left-section">
+                <ng-container *ngFor="let controlId of controlIds; let index = index">
+                  <div *ngIf="index < midpoint">
+                    <span *ngFor="let dataCaptureLanguage of dataCaptureLanguages; let i = index; let first = first; let last = last;">
+                      <b>{{ControlIdLabelObjects[controlId][dataCaptureLanguages[i]]}}</b>
+                      <i *ngIf="!last"> / </i>
+                      <i *ngIf="last"> : </i>
+                    </span>
+                    <span
                 *ngFor="let dataCaptureLanguage of dataCaptureLanguages; let i = index; let first = first; let last = last;">
                 <!-- <table width="100%">
                   <tr> -->
-                <span *ngIf="checkArray(previewData[controlId], controlId);then content else other_content"></span>
-                <ng-template #content>
-                  <td>
+                <span  class="value" *ngIf="checkArray(previewData[controlId], controlId);then content else other_content"></span>
+                <ng-template #content  >
+                  <td class="value">
                     <span *ngIf="previewData[controlId][i].label;then displayLabel else displayValue"></span>
-                    <ng-template #displayLabel>{{previewData[controlId][i].label}}</ng-template>
+                    <ng-template #displayLabel >{{previewData[controlId][i].label}}</ng-template>
                     <ng-template #displayValue>{{previewData[controlId][i].value}}</ng-template>
-                  </td>
+                  </td><br/>
                   <i *ngIf="!last"> / </i>
                 </ng-template>
                 <ng-template #other_content>
-                  <td *ngIf="i == 0">{{previewData[controlId]}}</td>
+                  <td class= "value" *ngIf="i == 0" >{{previewData[controlId]}}</td><br/>
                 </ng-template>
-                <!-- </tr>
-                </table>                 -->
               </span>
+                  </div>
+                </ng-container>
+              </td>
+              
+              <td class="right-section" >
+                <ng-container *ngFor="let controlId of controlIds; let index = index; ">
+                  <div *ngIf="index >= midpoint">
+                    <span *ngFor="let dataCaptureLanguage of dataCaptureLanguages let i = index; let first = first; let last = last;">
+                      <b>{{ ControlIdLabelObjects[controlId][dataCaptureLanguage] }}</b>
+                      <i *ngIf="!last"> / </i>
+                      <i *ngIf="last"> : </i>
+                      <!-- <span *ngIf="previewData[controlId][index]?.value">: {{ previewData[controlId][index]?.value }}:</span> -->
+                      <!-- <span *ngIf="!dataCaptureLanguage.isLast"> : </span> -->
+                    </span>
+                    <span
+                *ngFor="let dataCaptureLanguage of dataCaptureLanguages; let i = index; let first = first; let last = last;">
+                <!-- <table width="100%">
+                  <tr> -->
+                <span  class="value" *ngIf="checkArray(previewData[controlId], controlId);then content else other_content"></span>
+                <ng-template #content  >
+                  <td >
+                    <span *ngIf="previewData[controlId][i].label;then displayLabel else displayValue"></span>
+                    <ng-template #displayLabel >{{previewData[controlId][i].label}}</ng-template>
+                    <ng-template #displayValue>{{previewData[controlId][i].value}}</ng-template>
+                  </td><br/>
+                  <i *ngIf="!last"> / </i>
+                </ng-template>
+                <ng-template #other_content>
+                  <td *ngIf="i == 0" >{{previewData[controlId]}}</td><br/>
+                </ng-template>
+                
+              </span>
+                  </div>
+                </ng-container>
+              </td>
             </tr>
           </table>
         </div>
       </div>
-    </mat-card-content>
+    </mat-card-content>   
+    
     <div class="preview__footer-header">
       <span>{{ previewLabels.title_document }}</span>
       <span [ngStyle]="userPrefLanguageDir == 'ltr'? {'float': 'right'} : {'float': 'left'}">

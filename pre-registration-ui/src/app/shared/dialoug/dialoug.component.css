@@ -27,10 +27,11 @@ mat-form-field {
   padding-right: 10px;
 }
 .consent-popup-title {
-  font-size: 1rem;
+  font-size: 20px;
   margin: 0px;
   color: #c02533;
-  font-family: 'OpenSans';
+  font-family: 'TimesNewRoman';
+  text-align: center;
 }
 .consent-popup-subtitle {
   font-size: 0.8rem;
@@ -41,6 +42,15 @@ mat-form-field {
 .checkbox-accept {
   font-size: 0.8rem;
   padding: 10px;
+}
+ol{
+  font-size: 16px;
+}
+h3 , p {
+  font-size: 16px;
+  margin:0%;
+  margin-bottom: 0.5%;
+  padding: 0% ;
 }
 
 /* consent story desgin css  */

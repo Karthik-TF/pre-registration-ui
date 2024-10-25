@@ -22,6 +22,8 @@ import { Subscription } from "rxjs";
 import { NotificationDtoModel } from "src/app/shared/models/notification-model/notification-dto.model";
 import { utf8Encode } from "@angular/compiler/src/util";
 
+import { myFlag, setMyFlag } from  'src/app/shared/global-vars';
+
 /**
  * @description This is the dashbaord component which displays all the users linked to the login id
  *              and provide functionality like modifying the information, viewing the acknowledgement
@@ -657,6 +659,7 @@ export class DashBoardComponent implements OnInit, OnDestroy {
    * @memberof DashBoardComponent
    */
   onModifyInformation(user: Applicant) {
+    setMyFlag(true);
     const preId = user.applicationID;
     localStorage.setItem(appConstants.MODIFY_USER, "true");
     this.disableModifyDataButton = true;

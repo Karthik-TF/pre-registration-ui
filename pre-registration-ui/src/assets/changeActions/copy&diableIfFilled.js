@@ -1,5 +1,5 @@
+import { addDisabledUiField } from  'src/app/shared/global-vars';
 const copyAndDisableIfFilled = async (context, args, uiField) => {
-  console.log("copyAndDisableIfFilled called");
   if (args.length > 0) {
     let checkboxVal = context.userForm.controls[`${uiField.id}`].value;
     for (const arg of args) {
@@ -31,6 +31,7 @@ const copyAndDisableIfFilled = async (context, args, uiField) => {
                 // Disable only if the field is filled
                 if (fromFieldValue) {
                   context.userForm.controls[toId].disable();
+                  addDisabledUiField(uiField2);
                 }
               } else {
                 context.userForm.controls[toId].enable();
@@ -44,6 +45,7 @@ const copyAndDisableIfFilled = async (context, args, uiField) => {
               // Disable only if the field is filled
               if (fromFieldValue) {
                 context.userForm.controls[uiField2.id].disable();
+                addDisabledUiField(uiField2);
               }
               // Special handling for dropdowns or buttons
               if (

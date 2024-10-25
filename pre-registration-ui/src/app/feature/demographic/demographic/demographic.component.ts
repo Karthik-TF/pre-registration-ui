@@ -53,6 +53,8 @@ import {
 import identityStubJson from "../../../../assets/identity-spec1.json";
 import { RouterExtService } from "src/app/shared/router/router-ext.service";
 
+import { myFlag, setMyFlag, disabledUiFields} from "src/app/shared/global-vars";
+
 //malay
 interface DependentField {
   fieldId: string;
@@ -92,6 +94,8 @@ export class DemographicComponent extends FormDeactivateGuardService
     .split(",");
 
   expStep = 0;
+  filledFieldCount: number;
+  filledFields: Number;
 
   setStep(index: number) {
     this.expStep = index;
@@ -105,6 +109,8 @@ export class DemographicComponent extends FormDeactivateGuardService
     this.expStep--;
   }
 
+  userService: string = "";
+  userServiceType: string = "";
   agePattern: string;
   defaultDay: string;
   defaultMonth: string;
@@ -229,9 +235,9 @@ export class DemographicComponent extends FormDeactivateGuardService
     /** check if first load. Then no data entered by user. Hence, no data to upload in the field value.
      *  Filter the createAttributeArray method call.
      */
-    if (this.initializationFlag === false) {
+    if (this.initializationFlag === false || this.dataModification) {
       //Populate the data ONLY for the selected field.
-      if (selectedFieldId) {
+      if (selectedFieldId && selectedFieldId!="") {
         if (selectedFieldId != appConstants.IDSchemaVersionLabel) {
           this.createAttributeArray(selectedFieldId, this.identityObj);
         }
@@ -276,10 +282,10 @@ export class DemographicComponent extends FormDeactivateGuardService
         } else if (typeof this.identityObj[element] === "boolean") {
           let elementValue = this.identityObj[element];
           if (elementValue == true) {
-            this.newIdentityObj[element] = true;
+            this.newIdentityObj[element] = "Y";
           }
           if (elementValue == false) {
-            this.newIdentityObj[element] = false;
+            this.newIdentityObj[element] = "N";
           }
         }
       }
@@ -327,6 +333,7 @@ export class DemographicComponent extends FormDeactivateGuardService
    * @memberof DemographicComponent
    */
   async ngOnInit() {
+    console.log("1");
     await this.initialization();
     await this.initializeDataCaptureLanguages();
     //set translation service
@@ -341,13 +348,22 @@ export class DemographicComponent extends FormDeactivateGuardService
     // this.validationMessage = appConstants.errorMessages;
     this.initForm();
     await this.setFormControlValues();
-    if (!this.dataModification) {
-      if (this.isConsentMessage) this.consentDeclaration();
-    }
+    // if (!this.dataModification) {
+    //   if (this.isConsentMessage) this.consentDeclaration();
+    // }
     /*setting the initialization flag. To control method calls that are required only for the first time 
     when screen is loading*/
     this.initializationFlag = true;//malay
-    this.onChangeHandler("");
+
+    console.log("log1 :: before await this.onChangeHandler ")
+    // await this.onChangeHandler("");
+    const ongetFieldAndDataPromise = () => new Promise<void>(async (resolve) => {
+      await this.onChangeHandler("");
+        resolve(); // Resolve the promise once resetHiddenField is done
+      });
+      await ongetFieldAndDataPromise();
+      console.log("log2 :: after await this.onChangeHandler ")
+
     if (this.readOnlyMode) {
       this.userForm.disable();
     }
@@ -376,8 +392,43 @@ export class DemographicComponent extends FormDeactivateGuardService
      * have dependent attribute.
      */
     this.initializationFlag = false; //malay
-  }
 
+    if (this.dataModification) {
+      await this.getFieldAndData();
+    }
+
+  }
+  // async onChangeHandlerCall(){
+  //   const varr = await this.onChangeHandler("");
+  //   await Promise.all(varr);
+
+  // }
+  // async getFieldAndData(){
+  //   const onChangePromises=this.uiFields.map((control, index) => {
+  //     console.log(control.id)
+  //   return this.onChangeHandler(control.id);
+  //   });
+  //   await Promise.all(onChangePromises);
+
+  // }
+
+  // async getFieldAndData() {
+  //   for (const control of this.uiFields) {
+  //     console.log(control.id);
+  //     const onChangePromise = () => new Promise<void>((resolve) => {
+  //       this.onChangeHandler(control.id);
+  //       resolve(); 
+  //     });
+  //     await onChangePromise();
+  //   }
+  // }
+
+  async getFieldAndData() {
+    for (const control of this.uiFields) {
+      await this.onChangeHandler(control.id).then(async () => {
+      });
+    }
+  }
   ngAfterViewInit() {
     this.setInitialValue();
   }
@@ -401,7 +452,7 @@ export class DemographicComponent extends FormDeactivateGuardService
 
   protected searchInDropdown(controlId: string) {
     if (this.selectOptionsDataArray[`${controlId}`].length > 0) {
-      // get the search keyword
+      // get the search keywords
       const searchCtrlId = controlId + "_search";
       let search = this.userForm.controls[`${searchCtrlId}`].value;
       const selectData = this.selectOptionsDataArray[`${controlId}`];
@@ -722,7 +773,9 @@ export class DemographicComponent extends FormDeactivateGuardService
           let identityJsonSpec =
             response[appConstants.RESPONSE]["jsonSpec"]["identity"];
           this.identityData = identityJsonSpec["identity"];
-          //this.identityData = [];    //malay
+
+          // this.identityData = [];    //malay
+
           let locationHeirarchiesFromJson = [
             ...identityJsonSpec["locationHierarchy"], //malay
           ];
@@ -733,7 +786,7 @@ export class DemographicComponent extends FormDeactivateGuardService
 
           //malay
           // const fieldDefinitions = await this.loadFieldDefinitions();
-          // this.identityData.push(...fieldDefinitions["identity"]);
+          // this.identityData.push(...fieldDefinitions);
           // let locationHeirarchiesFromJson = [
           //   ...fieldDefinitions["locationHierarchy"],//malay
           // ];
@@ -788,7 +841,7 @@ export class DemographicComponent extends FormDeactivateGuardService
 
   //malay
   async loadFieldDefinitions() {
-    const response = await fetch('assets/data/niraUiSpecPreReg.json');
+    const response = await fetch('assets/data/niraUiSpec.json');
     return response.json();
   }
 
@@ -901,13 +954,24 @@ export class DemographicComponent extends FormDeactivateGuardService
               !validatorLang ||
               validatorLang == ""
             ) {
-              let regex = new RegExp(validatorItem.validator);
-              if (regex.test(val) == false) {
-                isInvalid = true;
-                if (this.validationErrorCodes[validatorItem.errorMessageCode]) {
-                  msg = this.validationErrorCodes[
-                    validatorItem.errorMessageCode
-                  ];
+              if (validatorItem.type === "nonFutureDate") {
+                let inputDate = new Date(val);
+                let currentDate = new Date();
+                currentDate.setHours(0, 0, 0, 0); // Clear time for accurate comparison
+                if (inputDate > currentDate) {
+                  isInvalid = true;
+                  msg = "The date must not be in the future.";
+                }
+              }
+              else if (validatorItem.type === "regex") {
+                let regex = new RegExp(validatorItem.validator);
+                if (regex.test(val) == false) {
+                  isInvalid = true;
+                  if (this.validationErrorCodes[validatorItem.errorMessageCode]) {
+                    msg = this.validationErrorCodes[
+                      validatorItem.errorMessageCode
+                    ];
+                  }
                 }
               }
             }
@@ -957,6 +1021,9 @@ export class DemographicComponent extends FormDeactivateGuardService
 
   getLocationNameFromIndex = (fieldId, fieldIndex) => {
     let items = this.getLocationHierarchy(fieldId);
+    if (fieldId.toLowerCase().includes("pollingstation")){
+      fieldIndex=fieldIndex-1;
+    }
     return items[fieldIndex];
   };
 
@@ -1074,14 +1141,22 @@ export class DemographicComponent extends FormDeactivateGuardService
   resetHiddenField = (uiField) => {
     this.dataCaptureLanguages.forEach((language, i) => {
       let controlId = "";
-      if (this.isControlInMultiLang(uiField)) {
+      if (this.isControlInMultiLang(uiField) && myFlag == false) {
         controlId = uiField.id + "_" + language;
         this.userForm.controls[controlId].reset();
         this.userForm.controls[controlId].setValue("");
-      } else if (i == 0) {
+      } else if (i == 0 && myFlag == false) {
         controlId = uiField.id;
+
+        if (controlId == "dateOfBirth") {
+          controlId = controlId + "_dateCtrl"
+          this.currentAge = null;
+        }
         this.userForm.controls[controlId].reset();
-        this.userForm.controls[controlId].setValue("");
+
+
+        this.userForm.controls[controlId].setValue("");   
+
       }
     });
   };
@@ -1092,10 +1167,43 @@ export class DemographicComponent extends FormDeactivateGuardService
    * and fields are shown/hidden in the UI form.
    */
   async onChangeHandler(selectedFieldId: string) {
-    //console.log("onChangeHandler " + selectedFieldId);
-    //if (!this.dataModification || (this.dataModification && this.userForm.valid) ) {
-    //populate form data in json for json-rules-engine to evalatute the conditions
+    if (this.initializationFlag == false && selectedFieldId == "userServiceType" ) {
+      for (const control of this.uiFields) {
+        if (!(control.id == "userService" || control.id == "userServiceType")) {
+          const resetHiddenFieldPromise = () => new Promise<void>((resolve) => {
+            this.resetHiddenField(control);
+            resolve();
+          });
+          await resetHiddenFieldPromise();
+          await this.onChangeHandler(control.id);
+        }
+      }
+    }
+    if (this.initializationFlag == false && selectedFieldId == "userService" ) {
+      for (const control of this.uiFields) {
+        if (!(control.id == "userService")) {
+          const resetHiddenFieldPromise = () => new Promise<void>((resolve) => {
+            this.resetHiddenField(control);
+            resolve();
+          });
+          await resetHiddenFieldPromise();
+          await this.onChangeHandler(control.id);
+        }
+      }
+    }
     const identityFormData = this.createIdentityJSONDynamic(true, selectedFieldId);
+
+    // Consent Declaration
+    if (selectedFieldId && selectedFieldId.trim() !== "") {
+      if (selectedFieldId == "userService" && this.userForm.controls[selectedFieldId].value !== this.userService) {
+        console.log(`Prev : ${this.userService}, New: ${this.userForm.controls[selectedFieldId].value}`);
+        if (!this.dataModification) {
+          if (this.isConsentMessage) this.consentDeclaration();
+        }
+        this.userService = this.userForm.controls[selectedFieldId].value;
+      }
+    }
+
     let isChild = false;
     let currentAge = null;
     if (
@@ -1130,6 +1238,7 @@ export class DemographicComponent extends FormDeactivateGuardService
     /** Execute processShowHideFields on first run to make all fields visible. */
     if (this.initializationFlag === true) {
       await this.processShowHideFields(formIdentityData);
+      
     }
     let field;
     let subField;
@@ -1162,7 +1271,7 @@ export class DemographicComponent extends FormDeactivateGuardService
           (subfield) => subfield.id === fieldId);
         //check if the subfield has "visibleCondition" or "requiredCondition"
         if (subField) {
-          console.log(subField)
+          //console.log(subField)
           if (subField.hasOwnProperty("visibleCondition")) {
             await this.processShowHideFields(formIdentityData, subField);
           }
@@ -1180,8 +1289,14 @@ export class DemographicComponent extends FormDeactivateGuardService
     // if (this.initializationFlag === true || field.hasOwnProperty("dependentFields")) {
     //   await this.processShowHideFields(formIdentityData);
     // }
-    if (selectedFieldId && selectedFieldId.trim() !== "") {
-      await this.processChangeActions(selectedFieldId);
+    if (selectedFieldId && selectedFieldId.trim() !== "" && myFlag == false) {
+      await this.processChangeActions(selectedFieldId).then(async () => {
+      });
+      // const ongetFieldAndDataPromise = () => new Promise<void>(async (resolve) => {
+      //   this.processChangeActions(selectedFieldId);
+      //   resolve(); // Resolve the promise once resetHiddenField is done
+      // });
+      //await ongetFieldAndDataPromise();
     }
 
     //following three lines commented malay.
@@ -1189,6 +1304,8 @@ export class DemographicComponent extends FormDeactivateGuardService
     // await this.processConditionalRequiredValidations(formIdentityData);
     // await this.processChangeActions(selectedFieldId);
     //}
+    //console.log("log 5:: inside end sync onChangeHandler(selectedFieldId: string)")
+
   }
 
   //malay--comment processShowHideFields
@@ -1248,28 +1365,32 @@ export class DemographicComponent extends FormDeactivateGuardService
         /** Construct a fact to be consumed by the json-rule-engine based on 
          * parent field value.
          */
-        if (subField.parentField) {
-          for (const field of subField.parentField) {
-            const parentFieldValue = formIdentityData.identity[field.fieldId];
-            //facts = { [field.fieldId]: parentFieldValue };
-            //facts[field.fieldId] = parentFieldValue;
-          }
-        }
-        console.log("for parent field:: " + JSON.stringify(subField.parentField))
-        console.log(formIdentityData)
+        // if (subField.parentField) {
+        //   for (const field of subField.parentField) {
+        //     const parentFieldValue = formIdentityData.identity[field.fieldId];
+        //     //facts = { [field.fieldId]: parentFieldValue };
+        //     //facts[field.fieldId] = parentFieldValue;
+        //   }
+        // }
+        //console.log("for parent field:: " + JSON.stringify(subField.parentField))
+        //console.log(formIdentityData)
         const resetHiddenFieldFunc = this.resetHiddenField;
         let visibilityRule = new Rule({
           conditions: subField.visibleCondition,
           onSuccess() {
             //in "visibleCondition" is statisfied then show the field
             subField.isVisible = true;
-            console.log(subField.id + " visible")
+            //console.log(subField.id + " visible")
           },
-          onFailure() {
+          async onFailure() {
             //in "visibleCondition" is not statisfied then hide the field
             subField.isVisible = false;
+            if(!myFlag){
+              
             resetHiddenFieldFunc(subField);
-            console.log(subField.id + " not visible")
+            }
+
+            //console.log(subField.id + " not visible")
           },
           event: {
             type: "message",
@@ -1279,7 +1400,7 @@ export class DemographicComponent extends FormDeactivateGuardService
           },
         });
         this.jsonRulesEngine.addRule(visibilityRule);
-        console.log(visibilityRule)
+        //console.log(visibilityRule)
         //evaluate the visibleCondition
         this.jsonRulesEngine
           .run(formIdentityData)
@@ -1294,14 +1415,14 @@ export class DemographicComponent extends FormDeactivateGuardService
             resolve(); // Resolve the promise on success
           })
           .catch((error) => {
-            console.log("err is", error);
+            //console.log("err is", error);
             this.jsonRulesEngine.removeRule(visibilityRule);
             reject(error);
           });
 
       }
       else {
-        console.log("called without subField");
+        //console.log("called without subField");
         this.uiFields.forEach((uiField) => {
           let facts = {};
           /** If no "visibleCondition" is given, then show the field.
@@ -1324,6 +1445,7 @@ export class DemographicComponent extends FormDeactivateGuardService
         uiField.changeAction != "" &&
         uiField.changeAction != null
       ) {
+        console.log(selectedFieldId)
         let changeAction = uiField.changeAction;
         let funcName = null;
         let funcArgs = null;
@@ -1395,11 +1517,11 @@ export class DemographicComponent extends FormDeactivateGuardService
   removeValidators = (uiField) => {
     this.dataCaptureLanguages.forEach((language, i) => {
       let controlId = "";
-      if (this.isControlInMultiLang(uiField)) {
+      if (this.isControlInMultiLang(uiField) && myFlag === false) {
         controlId = uiField.id + "_" + language;
         this.userForm.controls[controlId].clearValidators();
         this.userForm.controls[controlId].updateValueAndValidity();
-      } else if (i == 0) {
+      } else if (i == 0 && myFlag === false) {
         controlId = uiField.id;
         this.userForm.controls[controlId].clearValidators();
         this.userForm.controls[controlId].updateValueAndValidity();
@@ -1510,7 +1632,22 @@ export class DemographicComponent extends FormDeactivateGuardService
           onFailure() {
             //in "requiredCondition" is not statisfied then validate the field as not required
             uiField.required = false;
+            if(!myFlag){
+              
             removeValidatorFunc(uiField);
+            }
+
+            dataCaptureLanguages.forEach((language, i) => {
+              let controlId = "";
+              if (isControlInMultiLangFunc(uiField)) {
+                controlId = uiField.id + "_" + language;
+                addValidatorsFunc(uiField, controlId, language);
+              } else if (i == 0) {
+                controlId = uiField.id;
+                addValidatorsFunc(uiField, controlId, language);
+              }
+            });
+
           },
           event: {
             type: "message",
@@ -1585,16 +1722,20 @@ export class DemographicComponent extends FormDeactivateGuardService
  * @param fieldName location dropdown control Name
  */
   resetLocationFields(fieldName: string) {
-    //console.log("resetLocationFields " + fieldName);
-    if (this.isThisFieldInLocationHeirarchies(fieldName)) {
-      const locationFields = this.getLocationHierarchy(fieldName);
-      const index = locationFields.indexOf(fieldName);
-      for (let i = index + 1; i < locationFields.length; i++) {
-        let currentSelection = this.uiFields.find(uiField => uiField.id == fieldName);
-        let childSelection = this.uiFields.find(uiField => uiField.id == locationFields[i]);
-        if (childSelection.locationHierarchyLevel > currentSelection.locationHierarchyLevel) {
-          this.userForm.controls[locationFields[i]].setValue("");
-          this.userForm.controls[locationFields[i]].markAsUntouched();
+    // Check if the fieldName is present in the disabledUiFields array
+    const isFieldDisabled = disabledUiFields.some(uiField => uiField.id === fieldName);
+    // Proceed only if the field is not present in the disabled fields array
+    if (!isFieldDisabled) {
+      if (this.isThisFieldInLocationHeirarchies(fieldName)) {
+        const locationFields = this.getLocationHierarchy(fieldName);
+        const index = locationFields.indexOf(fieldName);
+        for (let i = index + 1; i < locationFields.length; i++) {
+          let currentSelection = this.uiFields.find(uiField => uiField.id == fieldName);
+          let childSelection = this.uiFields.find(uiField => uiField.id == locationFields[i]);
+          if (childSelection.locationHierarchyLevel > currentSelection.locationHierarchyLevel) {
+            this.userForm.controls[locationFields[i]].setValue("");
+            this.userForm.controls[locationFields[i]].markAsUntouched();
+          }
         }
       }
     }
@@ -1616,7 +1757,7 @@ export class DemographicComponent extends FormDeactivateGuardService
               .getLocationImmediateHierearchy(dataCaptureLanguage, locationCode, locationHierarchyName)
               .subscribe(
                 (response) => {
-                  //console.log("fetched locations for: " + fieldName + ": " + dataCaptureLanguage);
+                  console.log("fetched locations for: " + fieldName + ": " + dataCaptureLanguage);
                   if (response[appConstants.RESPONSE]) {
                     response[appConstants.RESPONSE][
                       appConstants.DEMOGRAPHIC_RESPONSE_KEYS.locations
@@ -1626,6 +1767,8 @@ export class DemographicComponent extends FormDeactivateGuardService
                         valueName: element.name,
                         languageCode: element.langCode,
                       };
+                      // console.log("fetched locations for: " + fieldName + ": " + codeValueModal);
+                      // console.log("line 2 fetched locations for: " + fieldName + ": " + codeValueModal.valueName);
                       this.selectOptionsDataArray[`${fieldName}`].push(codeValueModal);
                     });
                   }
@@ -1795,10 +1938,11 @@ export class DemographicComponent extends FormDeactivateGuardService
                   if (parentLocationName) {
                     let locationCode = this.userForm.controls[parentLocationName].value;
                     if (locationCode) {
-                      // console.log(`fetching locations for: ${control.id}`);
-                      // console.log(`with parent: ${parentLocationName} having value: ${locationCode}`);
+                      console.log("hi")
+                      console.log(`fetching locations for: ${control.id}`);
+                      console.log(`with parent: ${parentLocationName} having value: ${locationCode}`);
                       promisesResolved.push(await this.loadLocationData(locationCode, control.id, control.locationHierarchyName));
-                      //console.log(this.selectOptionsDataArray[control.id]);
+                      console.log(this.selectOptionsDataArray[control.id]);
                     }
                   }
                 }
@@ -2215,12 +2359,23 @@ export class DemographicComponent extends FormDeactivateGuardService
       });
       console.log(this.userForm.valid)
 
+      console.log(this.filledFields);
+      const filledFields = Object.keys(this.userForm.controls).filter(key => {
+        return this.userForm.controls[key].value !== null && this.userForm.controls[key].value !== '';
+      }).length;
+
+      console.log(`Number of filled fields: ${filledFields}`);
+      this.filledFieldCount = filledFields;
+      
+      // Log the filled count separately
+      console.log('Number of filled fields:', this.filledFieldCount);
+
       if (this.userForm.valid) {
         //malay-popup
         // open dialog for confirming 
-        const message = "This is a confirmation message to proceed with the entered user data.";
-        const ok_text = "OK";
-        const cancel_text = "CANCEL";
+        const message = "Please review your details before proceeding to the next section.";
+        const ok_text = "Proceed";
+        const cancel_text = "Review Details";
         const body = {
           case: "CONFIRMATION",
           textDir: this.userPrefLanguageDir,
@@ -2442,6 +2597,7 @@ export class DemographicComponent extends FormDeactivateGuardService
       attr = this.userForm.controls[`${element}`].value;
     }
     identity[element] = attr;
+    
   }
 
   /**
@@ -2864,7 +3020,7 @@ export class DemographicComponent extends FormDeactivateGuardService
         case 'email': text = `${error.control_name} has wrong email format!`; break;
         case 'minlength': text = `${error.control_name} has wrong length! Required length: ${error.error_value.requiredLength}`; break;
         case 'areEqual': text = `${error.control_name} must be equal!`; break;
-        default: text = `${error.control_name}: ${error.error_name}: ${error.error_value}`;
+        default: text = `${error.control_name} is invalid`;
       }
       return text;
     }
@@ -2882,7 +3038,8 @@ export class DemographicComponent extends FormDeactivateGuardService
       const controlErrors: any = controls[key].errors;
       if (controlErrors !== null) {
         Object.keys(controlErrors).forEach(keyError => {
-          let label = _this.uiFields.find(f => f.id == key)
+          let label = _this.uiFields.find(f => f.id == key);
+          if (!label) label = _this.uiFields.find(f => f.id == key.replace(/_[a-zA-Z]+$/, ''));
           if (label != null) {
             errors.push({
               control_name: label.labelName instanceof String ? label.labelName : label.labelName[_this.userPrefLanguage],
@@ -2901,5 +3058,17 @@ export class DemographicComponent extends FormDeactivateGuardService
       filtered.locationHierarchyLevel - 1 && this.getLocationHierarchy(fieldId).indexOf(uiField.id) > -1);
     return (!Array.isArray(parentField) || !parentField.length) ? null : parentField;
   };
+
+  generatePRN() {
+    this.dataStorageService.getPRN().subscribe(
+      (prn: string) => {
+        this.generatedPRN = prn;
+        this.showPRNField = true;
+      },
+      (error) => {
+        console.error('Error fetching PRN:', error);
+      }
+    );
+  }
 
 }

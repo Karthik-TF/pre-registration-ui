@@ -19,6 +19,8 @@ import { LogService } from "src/app/shared/logger/log.service";
 import Utils from "src/app/app.util";
 import { Subscription } from "rxjs";
 import identityStubJson from "../../../../assets/identity-spec.json";
+import { myFlag, setMyFlag } from  'src/app/shared/global-vars';
+import { Engine, Rule } from "json-rules-engine";
 
 @Component({
   selector: "app-file-upload",
@@ -56,6 +58,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     docCatCode: "",
     docTypeCode: "",
   };
+  
   selectedDocuments: SelectedDocuments[] = [];
   dataCaptureLanguages = [];
   dataCaptureLanguagesLabels = [];
@@ -113,6 +116,10 @@ export class FileUploadComponent implements OnInit, OnDestroy {
   canDeactivateFlag: boolean;
   checked: true;
   dataUploadComplete: true;
+  //malay
+  validationErrorCodes: any;
+  jsonRulesEngine = new Engine();
+  identityObjCopy:any;
   constructor(
     private registration: RegistrationService,
     private dataStorageService: DataStorageService,
@@ -158,11 +165,15 @@ export class FileUploadComponent implements OnInit, OnDestroy {
 
   async getIdentityJsonFormat() {
     return new Promise((resolve) => {
-      this.dataStorageService.getIdentityJson().subscribe((response) => {
+      this.dataStorageService.getIdentityJson().subscribe(async (response) => {
         //response = identityStubJson;
         let identityJsonSpec =
           response[appConstants.RESPONSE]["jsonSpec"]["identity"];
         this.identityData = identityJsonSpec["identity"];
+
+        // this.identityData = [];    //malay
+        // const fieldDefinitions = await this.loadFieldDefinitions();
+        // this.identityData.push(...fieldDefinitions);
         this.identityData.forEach((obj) => {
           if (obj.controlType === "fileupload") {
             this.uiFields.push(obj);
@@ -175,6 +186,11 @@ export class FileUploadComponent implements OnInit, OnDestroy {
         });
     });
   }
+  //malay
+  // async loadFieldDefinitions() {
+  //   const response = await fetch('assets/data/niraUiSpec.json');
+  //   return response.json();
+  // }
 
   private getPrimaryLabels(lang) {
     this.dataStorageService
@@ -198,7 +214,6 @@ export class FileUploadComponent implements OnInit, OnDestroy {
    * @memberof FileUploadComponent
    */
   private async initiateComponent() {
-
     await this.getIdentityJsonFormat();
     this.isModify = localStorage.getItem("modifyDocument");
     this.activatedRoute.params.subscribe((param) => {
@@ -213,6 +228,12 @@ export class FileUploadComponent implements OnInit, OnDestroy {
       this.initializeDataCaptureLanguages();
       this.translate.use(this.dataCaptureLanguages[0]);
       await this.getApplicantTypeID();
+      let identityRequest = { identity: this.identityObjCopy };
+      this.uiFields.forEach(async (uiField) => {
+      if (uiField.hasOwnProperty("requiredCondition")) {
+        await this.processConditionalRequiredValidations(identityRequest, uiField);
+      }});
+    // await Promise.all(validationPromises);
       //on page load, update application status from "Application_Incomplete"
       //to "Pending_Appointment", if all required documents are uploaded
       await this.changeStatusToPending();
@@ -500,6 +521,8 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     //console.log("getApplicantTypeID");
     let attributesArr = [];
     const identityObj = this.users[0].request.demographicDetails.identity;
+    this.identityObjCopy=identityObj;
+    console.log(identityObj)
     if (identityObj) {
       let keyArr: any[] = Object.keys(identityObj);
       for (let index = 0; index < keyArr.length; index++) {
@@ -1136,7 +1159,116 @@ export class FileUploadComponent implements OnInit, OnDestroy {
     this.documentCategory = null;
     this.documentType = null;
   }
-
+  //malay
+  
+  
+  customValidator(
+    control: FormControl,
+    uiFieldId: string,
+    controlLangCode: string
+  ) {
+    let val = control.value;
+    let filtered = this.uiFields.filter((uiField) => uiField.id == uiFieldId);
+    if (val && filtered.length > 0) {
+      let uiField = filtered[0];
+      let msg = "";
+      let isInvalid = false;
+      if (uiField.validators !== null && uiField.validators.length > 0) {
+        uiField.validators.forEach((validatorItem) => {
+          if (!isInvalid) {
+            let validatorLang = validatorItem.langCode;
+            if (
+              (validatorLang && validatorLang == controlLangCode) ||
+              !validatorLang ||
+              validatorLang == ""
+            ) {
+              let regex = new RegExp(validatorItem.validator);
+              if (regex.test(val) == false) {
+                isInvalid = true;
+                if (this.validationErrorCodes[validatorItem.errorMessageCode]) {
+                  msg = this.validationErrorCodes[
+                    validatorItem.errorMessageCode
+                  ];
+                }
+              }
+            }
+          }
+        });
+        //console.log(`uiFieldId:${uiFieldId} langCode:${controlLangCode} isInvalid:${isInvalid}`);
+        if (isInvalid) {
+          return {
+            customPattern: {
+              value: val,
+              msg: msg,
+            },
+          };
+        }
+      }
+    }
+    return null;
+  }
+  addValidators = (uiField: any, controlId: string, languageCode: string) => {
+    if (uiField.required) {
+      this.userForm.controls[`${controlId}`].setValidators(Validators.required);
+    }
+    if (uiField.validators !== null && uiField.validators.length > 0) {
+      if (uiField.required) {
+        this.userForm.controls[`${controlId}`].setValidators([
+          Validators.required,
+          (c: FormControl) => this.customValidator(c, uiField.id, languageCode),
+        ]);
+      } else {
+        this.userForm.controls[`${controlId}`].setValidators([
+          (c: FormControl) => this.customValidator(c, uiField.id, languageCode),
+        ]);
+      }
+    }
+  };
+  
+  async processConditionalRequiredValidations(identityFormData, uiField) {
+    return new Promise<void>((resolve, reject) => {
+      let facts = {};
+      if (uiField && uiField.requiredCondition && uiField.requiredCondition != "") {
+        let requiredRule = new Rule({
+          conditions: uiField.requiredCondition,
+          onSuccess() {
+            //in "requiredCondition" is statisfied then validate the field as required
+            if (!uiField.labelName.eng.includes(" (Mandatory)")) {
+              uiField.labelName.eng += " (Mandatory)";
+            } 
+          },
+          onFailure() {
+          },
+          event: {
+            type: "message",
+            params: {
+              data: "",
+            },
+          },
+        });
+        this.jsonRulesEngine.addRule(requiredRule);
+        console.log(requiredRule);
+        console.log(identityFormData);
+        this.jsonRulesEngine
+          .run(identityFormData)
+          .then((results) => {
+            results.events.map((event) =>
+              console.log(
+                "jsonRulesEngine for requiredConditions run successfully",
+                event.params.data
+              )
+            );
+            this.jsonRulesEngine.removeRule(requiredRule);
+            resolve(); // Resolve the promise on success
+          })
+          .catch((error) => {
+            console.log("err is", error);
+            this.jsonRulesEngine.removeRule(requiredRule);
+            reject(error);
+          });
+      }
+    });
+  }
   /**
    *@description method to send the file to the server.
    *
@@ -1423,6 +1555,7 @@ export class FileUploadComponent implements OnInit, OnDestroy {
    * @memberof FileUploadComponent
    */
   onBack() {
+    setMyFlag(true);
     localStorage.setItem(appConstants.MODIFY_USER, "true");
     let url = Utils.getURL(this.router.url, "demographic");
     this.router.navigateByUrl(url + `/${this.preRegId}`);
@@ -1450,9 +1583,9 @@ export class FileUploadComponent implements OnInit, OnDestroy {
       if (this.userForm.valid) {
         //malay-popup
         // open dialog for confirming 
-        const message = "This is a confirmation message to proceed with the files uploaded";
-        const ok_text = "OK";
-        const cancel_text = "CANCEL";
+        const message = "Please review your details before proceeding to the next section.";
+        const ok_text = "Proceed";
+        const cancel_text = "Review Details";
         const body = {
           case: "CONFIRMATION",
           textDir: this.userPrefLanguageDir,

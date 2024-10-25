@@ -86,7 +86,7 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
     this.name = this.configService.getConfigByKey(
       appConstants.CONFIG_KEYS.preregistration_identity_name
     );
-
+    await this.updateApplicationStatus();
     await this.getUserInfo(this.preRegIds);
     //console.log(this.usersInfoArr);
     for (let i = 0; i < this.usersInfoArr.length; i++) {
@@ -115,7 +115,22 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
     this.prepareAckDataForUI();
     this.showSpinner = false;
   }
-
+  updateApplicationStatus = async () => {
+    return new Promise((resolve) => {
+      this.preRegIds.forEach(async (prid: any, index) => {
+        this.dataStorageService.updateApplicationStatus(
+          prid, appConstants.APPLICATION_STATUS_CODES.booked)
+          .subscribe(
+            (response) => {
+              resolve(true);
+            },
+            (error) => {
+              resolve(true);
+            }
+          );
+      });
+    });
+  }
   async getUserInfo(preRegIds: string[]) {
     debugger
 
@@ -317,7 +332,7 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
       // if(this.createdTime){
       //   this.ackDataItem["Time"] = this.createdTime;
       // }
-      
+
       this.usersInfoArr.forEach(userInfo => {
         if (userInfo.preRegId == prid) {
           this.ackDataItem["qrCodeBlob"] = userInfo.qrCodeBlob;
