@@ -2901,15 +2901,5 @@ export class DemographicComponent extends FormDeactivateGuardService
       filtered.locationHierarchyLevel - 1 && this.getLocationHierarchy(fieldId).indexOf(uiField.id) > -1);
     return (!Array.isArray(parentField) || !parentField.length) ? null : parentField;
   };
-  // generatePRN() {
-  //   this.dataStorageService.getPRN().subscribe(
-  //     (prn: string) => { 
-  //       this.generatedPRN = prn;
-  //       this.showPRNField = true;
-  //     },
-  //     (error) => {
-  //       console.error('Error fetching PRN:', error);
-  //     }
-  //   );
-  // }
+
 }
