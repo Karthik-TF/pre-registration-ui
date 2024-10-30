@@ -2736,6 +2736,50 @@
             <mat-expansion-panel [expanded]="expStep === 8" (opened)="setStep(8)" hideToggle>
               <mat-expansion-panel-header>
                 <mat-panel-title>
+                  <b>Foundlink:</b> 
+                
+                </mat-panel-title>
+                <mat-panel-description>
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+            
+              <span *ngFor="let alignmentGroup of alignmentGroups">
+                <div class="rowContainer">
+                  <span *ngFor="let field of uiFieldsForAlignmentGroups[alignmentGroup]; index as uiFieldIndex">
+            
+                    <div class="fieldContainer" *ngIf="field.isVisible == true && field.renderID === 'frm_3afc_c7_Found_child'"> 
+                      <div class="fieldHeader" [ngStyle]="field.headerStyle">
+                        <mat-checkbox [formControlName]="field.id" (change)="onChangeHandler(field.id)">
+                          <span *ngFor="let lang of dataCaptureLanguages;index as langIndex">
+                            <span *ngIf="langIndex !== 0"> / </span>{{field.labelName[lang]}}
+                          </span>
+                        </mat-checkbox>
+                        <span *ngIf="field.required" class="required-annotation"></span>
+                        
+                        <span *ngIf="field.required" class="required-annotation">*</span>
+                      </div>
+                      <div class="fieldContent" [ngStyle]="field.containerStyle">
+                        <span *ngIf="!readOnlyMode && primaryuserForm && userForm.get(field.id) && userForm.get(field.id).hasError('required') && userForm.get(field.id).touched">
+                          <mat-error class="primary-errors">
+                            {{ field.labelName[userPrefLanguage] }} {{demographiclabels.validation.requiredMessage}}
+                          </mat-error>
+                        </span>
+                      </div>
+                    </div>
+            
+                  </span>
+                </div>
+              </span>
+            
+              <mat-action-row>
+                <button mat-button color="warn" (click)="prevStep()">Previous</button>
+                <button mat-button color="primary" (click)="nextStep()">Next</button>
+              </mat-action-row>
+            </mat-expansion-panel>
+
+            <mat-expansion-panel [expanded]="expStep === 9" (opened)="setStep(9)" hideToggle>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
                <b>Father's Details:</b>
                 </mat-panel-title>
               </mat-expansion-panel-header>
