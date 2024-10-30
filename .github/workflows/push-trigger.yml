@@ -14,6 +14,7 @@ on:
       - develop
       - tf_nira_dev
       - altcha-dev
+      - tf_nira_qa
       - MOSIP*
 
 jobs:
