@@ -6,6 +6,7 @@ import { DialougComponent } from "src/app/shared/dialoug/dialoug.component";
 import { TranslateService } from "@ngx-translate/core";
 import { DataStorageService } from "src/app/core/services/data-storage.service";
 import { NotificationDtoModel } from "src/app/shared/models/notification-model/notification-dto.model";
+import { NotificationDtoModelv2 } from "src/app/shared/models/notification-model/notificationv2-dto.model";
 import Utils from "src/app/app.util";
 import * as appConstants from "../../../app.constants";
 import { RequestModel } from "src/app/shared/models/request-model/RequestModel";
@@ -43,6 +44,7 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
   subscriptions: Subscription[] = [];
   notificationTypes: string[];
   preRegIds: any;
+  userService: any;
   ltrLangs = this.configService
     .getConfigByKey(appConstants.CONFIG_KEYS.mosip_left_to_right_orientation)
     .split(",");
@@ -195,6 +197,9 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
             nameListObj.langCode = applicationLang;
             nameListObj.regDto = regDto;
             this.usersInfoArr.push(nameListObj);
+            if (!this.userService) {
+              this.userService = demographicData["userService"];
+            }
             //console.log(this.usersInfoArr);
             this.applicantContactDetails.push({
               "preRegId": user["request"].preRegistrationId,
@@ -644,7 +649,7 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
               contactInfo = item;
             }
           });
-          notificationObject[user.langCode] = new NotificationDtoModel(
+          notificationObject[user.langCode] = new NotificationDtoModelv2(
             user.fullName,
             user.preRegId,
             user.bookingData
@@ -657,7 +662,8 @@ export class AcknowledgementComponent implements OnInit, OnDestroy {
             contactInfo["phone"] === undefined ? null : contactInfo["phone"],
             contactInfo["email"] === undefined ? null : contactInfo["email"],
             additionalRecipient,
-            false
+            false,
+            contactInfo["userService"] = this.userService
           );
         }
       });
